@@ -1,25 +1,20 @@
 package polytanks.tanks;
 
-import polytanks.Main;
 import polytanks.environment.Wall;
 
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-
-import polytanks.utils.GameMathUtils;
+import java.awt.geom.Rectangle2D;
 
 import static polytanks.utils.GameMathUtils.CheckAngleBoundary;
 
-
-public class CpuTank extends Tank{
+public class UserTank extends Tank{
     // User Input control flags
     boolean turningLeft = false;
     boolean turningRight = false;
     boolean accelForward = false;
     boolean accelBackward = false;
-    UserTank enemyTank;
-    Main game = null;
 
     Wall wall;
     // Screen dimension for limiting position
@@ -38,12 +33,11 @@ public class CpuTank extends Tank{
     int[] xOrigPtsBodyInt = {0,0,0,0}, yOrigPtsBodyInt = {0,0,0,0};
     int[] xOrigPtsTurretInt = {0,0,0,0}, yOrigPtsTurretInt = {0,0,0,0};
     int[] xOrigPtsBarrelInt = {0,0,0,0}, yOrigPtsBarrelInt = {0,0,0,0};
+    Polygon collisionPoly = new Polygon();
 
 
-    public CpuTank(Main main, int xSize, int ySize, int origPosX, int origPosY, Wall wall, UserTank userTank) {
-        this.game = main;
+    public UserTank(int xSize, int ySize, int origPosX, int origPosY, Wall wall) {
         this.wall = wall;
-        enemyTank = userTank;
 
         screenWidth = xSize; // set screen limits
         screenHeight = ySize; // set screen limits
@@ -56,18 +50,19 @@ public class CpuTank extends Tank{
         accelerationRate = .10; // Used to calc velocity
         decay = 0.1; // slowing rate for current velocity (inertia)
         accelDecay = 0.1; // slowing rate for acceleration (movement under power)
-        angle = 0;
+        angle = Math.PI/2; // Point it right (90 Degrees)
         turningRate = 0.05; // Turns in radians (0 - 2PI)
     }
 
     public void move() {
-        pursue();
         Double origX = posX;
         Double origY = posY;
 
         if (turningLeft) {
-            angle -= turningRate;
+            angle -= turningRate; // decrease angle by rate so turn speed can be easily modified
+            // Make sure angle is within bounds of 360 degrees (2 PI rad)
             angle = CheckAngleBoundary(angle);
+
 
             turningLeft = false; // reset user control
 
@@ -158,61 +153,6 @@ public class CpuTank extends Tank{
         }
     }
 
-    public void pursue() {
-        // Get enemy tank location
-        Point2D enemyLocation = enemyTank.getTankLocation();
-        // Get angle to enemy tank
-        Double angleToEnemy = GameMathUtils.GetAngleBetweenTwoPoints(this.getTankLocation(), enemyLocation);
-
-        if (!isWallBlockingView()) {
-            if (Math.toDegrees(this.angle) >= Math.toDegrees(angleToEnemy)-3 &&
-                    Math.toDegrees(this.angle) <= Math.toDegrees(angleToEnemy) +3 ){
-                game.TankFireCannon(this);
-            } else {
-                // Rotate tank to target
-                if (GameMathUtils.isAngleToLeft(angle, angleToEnemy)) {
-                    turningLeft = true;
-                } else {
-                    turningRight = true;
-                }
-            }
-        } else {
-            // Need to drive to better spot
-            // Rotate tank to target
-            if (GameMathUtils.isAngleToLeft(angle, angleToEnemy)) {
-                turningLeft = true;
-            } else {
-                turningRight = true;
-            }
-            accelForward = true;
-        }
-
-    }
-
-    private boolean isWallBlockingView() {
-        // Create line to enemy tank
-        // Ask wall to check all walls for intersection with that line
-        Line2D line2D = new Line2D.Double();
-        line2D.setLine(this.getTankLocation(), enemyTank.getTankLocation());
-        return (wall.checkCollision(line2D))  ? true : false;
-    }
-
-    private Double getDistanceToEnemy(Point2D enemyLocation, Point2D cpuLocation) {
-        return Math.sqrt(Math.pow(getDistanceY(enemyLocation, cpuLocation), 2) +
-                Math.pow(getDistanceX(enemyLocation, cpuLocation), 2));
-    }
-
-    private Double getDistanceX(Point2D enemyLocation, Point2D cpuLocation) {
-        return enemyLocation.getX() - cpuLocation.getX() ;
-    }
-
-    private Double getDistanceY(Point2D enemyLocation, Point2D cpuLocation) {
-        return  cpuLocation.getY() - enemyLocation.getY();
-    }
-
-
-
-
     public double getBarrelAngle(){
         return angle;
     }
@@ -227,8 +167,15 @@ public class CpuTank extends Tank{
         return p;
     }
 
-    public void paint(Graphics2D g) {
+    public boolean checkCollision(Point2D p) {
+        return (collisionPoly.contains(p)) ? true : false;
+    }
 
+    public boolean checkCollision(double x, double y, double w, double h) {
+        return (collisionPoly.intersects(x, y, w, h)) ? true : false;
+    }
+
+    public void paint(Graphics2D g) {
         for (int i=0; i < xOrigPtsBody.length; i++) {
             xOrigPtsBodyInt[i] = (int)(xOrigPtsBody[i]*Math.cos(angle) - yOrigPtsBody[i]*Math.sin(angle)+posX+.5);
             yOrigPtsBodyInt[i] = (int)(xOrigPtsBody[i]*Math.sin(angle) + yOrigPtsBody[i]*Math.cos(angle)+posY+.5);
@@ -261,7 +208,12 @@ public class CpuTank extends Tank{
 
         g.setColor(Color.gray);
         g.fillPolygon(xOrigPtsBodyInt, yOrigPtsBodyInt, xOrigPtsBodyInt.length);
-        g.setColor(Color.blue);
+
+        for (int i=0; i<xOrigPtsBodyInt.length; i++) {
+            collisionPoly.addPoint(xOrigPtsBodyInt[i], yOrigPtsBodyInt[i]);
+        }
+
+        g.setColor(Color.darkGray);
         g.fillPolygon(xOrigPtsTurretInt, yOrigPtsTurretInt, xOrigPtsTurretInt.length);
         g.setColor(Color.black);
         g.fillPolygon(xOrigPtsBarrelInt, yOrigPtsBarrelInt, xOrigPtsBarrelInt.length);

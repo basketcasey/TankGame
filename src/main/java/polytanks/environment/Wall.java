@@ -17,22 +17,29 @@ public class Wall {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
 
-        Rectangle2D rect, rect2;
-        Rectangle2D collisionRect, collisionRect2; // Little buffer added
+        Rectangle2D rect, rect2, rect3;
+        Rectangle2D collisionRect, collisionRect2, collisionRect3; // Little buffer added
 
         rect = new Rectangle2D.Float();
-        rect.setFrame(200, 200, 100, 100);
+        rect.setFrame(200, 400, 10, 50);
         collisionRect = new Rectangle2D.Float();
-        collisionRect.setFrame(185, 185, 130, 130);
+        collisionRect.setFrame(185, 385, 40, 80);
         walls.add(rect);
         collisionWalls.add(collisionRect);
 
         rect2 = new Rectangle2D.Float();
-        rect2.setFrame(500, 100, 10, 400);
+        rect2.setFrame(500, 100, 10, 100);
         collisionRect2 = new Rectangle2D.Float();
-        collisionRect2.setFrame(485, 85, 40, 430);
+        collisionRect2.setFrame(485, 85, 40, 130);
         walls.add(rect2);
         collisionWalls.add(collisionRect2);
+
+        rect3 = new Rectangle2D.Float();
+        rect3.setFrame(50, 150, 200, 10);
+        collisionRect3 = new Rectangle2D.Float();
+        collisionRect3.setFrame(35, 135, 230, 40);
+        walls.add(rect3);
+        collisionWalls.add(collisionRect3);
     }
 
     public boolean checkCollision(Point2D p) {

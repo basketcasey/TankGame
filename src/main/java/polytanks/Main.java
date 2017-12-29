@@ -3,12 +3,15 @@ package polytanks;
 import polytanks.environment.Wall;
 import polytanks.tanks.CpuTank;
 import polytanks.tanks.Tank;
+import polytanks.tanks.UserTank;
 import polytanks.weapons.TankShot;
 
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFrame;
 
@@ -16,14 +19,18 @@ import javax.swing.JFrame;
 
 public class Main extends JFrame {
     boolean leftPressed, rightPressed, upPressed, downPressed, firePressed;
-    private Tank tank;
+    private UserTank userTank;
     private CpuTank cpuTank, cpuTank2;
     TankShot shot, cpushot, cpushot2 = null;
 
     private boolean gameRunning;
     private int screenWidth = 800;
     private int screenHeight = 600;
+    private int health = 100;
+    private int score = 0;
     private Wall wall;
+
+    private HashMap<Tank, TankShot> shots = new HashMap<>();
 
     // To get around static class issues for main game, an instance is created
     // and control is immediately handed here
@@ -31,9 +38,9 @@ public class Main extends JFrame {
         // Create game objects that load images early so they are available to draw
         // once the display is created
         wall = new Wall(screenWidth, screenHeight);
-        tank = new Tank(screenWidth, screenHeight, 100, 100, wall);
-        cpuTank = new CpuTank(this, screenWidth, screenHeight, screenWidth/2, screenHeight/2, wall, tank);
-        cpuTank2 = new CpuTank(this, screenWidth, screenHeight, screenWidth - 40, screenHeight - 40, wall, tank);
+        userTank = new UserTank(screenWidth, screenHeight, 100, 100, wall);
+        cpuTank = new CpuTank(this, screenWidth, screenHeight, screenWidth/2, screenHeight/2, wall, userTank);
+        cpuTank2 = new CpuTank(this, screenWidth, screenHeight, screenWidth - 40, screenHeight - 40, wall, userTank);
 
         // Define the frame variables
         setSize(screenWidth, screenHeight);
@@ -55,44 +62,47 @@ public class Main extends JFrame {
         g2.setColor(Color.white);
         g2.fillRect(0, 0, 800, 600);
 
-        // Add the tank
-        tank.paint(g2);
+        // Add scoring
+//        RenderingHints rh =
+//                new RenderingHints(RenderingHints.KEY_ANTIALIASING,
+//                        RenderingHints.VALUE_ANTIALIAS_ON);
+//
+//        rh.put(RenderingHints.KEY_RENDERING,
+//                RenderingHints.VALUE_RENDER_QUALITY);
+//        g2.setRenderingHints(rh);
+        g2.setColor(Color.BLUE);
+        g2.setFont(new Font("Purisa", Font.PLAIN, 18));
+        g2.drawString("UserTank Battle", 20, 40);
+        g2.drawString("Health: " + health + "%   Score: " + score, screenWidth/2 - 100, 40 );
+
+        // Add the tanks
+        userTank.paint(g2);
         cpuTank.paint(g2);
         cpuTank2.paint(g2);
         wall.paint(g2);
 
-        // If took a shot, draw it
-        if (shot != null) {
+        // handle shots taken
+        ArrayList<Tank> tankShotsToDelete = new ArrayList<>();
+        for(Map.Entry<Tank, TankShot> entry : shots.entrySet()) {
+            Tank tank = entry.getKey();
+            TankShot shot = entry.getValue();
             shot.move(wall);
             shot.paint(g2);
             if (shot.getShotComplete()) {
-                shot = null;
+                // queue shots to delete - Deleting here causes exception
+                tankShotsToDelete.add(tank);
             }
+        }
+        for (int i=0; i < tankShotsToDelete.size(); i++) {
+            shots.remove(tankShotsToDelete.get(i));
         }
 
-        // If CPU tank took a shot, draw it
-        if (cpushot != null) {
-            cpushot.move(wall);
-            cpushot.paint(g2);
-            if (cpushot.getShotComplete()) {
-                cpushot = null;
-            }
-        }
-
-        // If CPU tank took a shot, draw it
-        if (cpushot2 != null) {
-            cpushot2.move(wall);
-            cpushot2.paint(g2);
-            if (cpushot2.getShotComplete()) {
-                cpushot2 = null;
-            }
-        }
     }
 
     private void gameLoop() {
         while (gameRunning) {
             processUserControls();
-            tank.move();
+            userTank.move();
             cpuTank.move();
             cpuTank2.move();
             repaint();
@@ -109,42 +119,29 @@ public class Main extends JFrame {
     // Needed for long presses of buttons
     private void processUserControls() {
         if (leftPressed) {
-            tank.setTurningLeft();
+            userTank.setTurningLeft();
         }
         if (rightPressed) {
-            tank.setTurningRight();
+            userTank.setTurningRight();
         }
         if (upPressed) {
-            tank.setAccelForward();
+            userTank.setAccelForward();
         }
         if (downPressed) {
-            tank.setAccelBackward();
+            userTank.setAccelBackward();
         }
     }
 
-    public void CpuTankFireCannon(CpuTank tank) {
+    public void TankFireCannon(Tank tank) {
         double shotAngle = tank.getBarrelAngle() - (Math.PI / 2);
         Point barrelTip = tank.getBarrelPosition();
-        if (cpushot == null) {
-            cpushot = new TankShot(screenWidth, screenHeight, shotAngle, barrelTip.x, barrelTip.y);
+        if (!shots.containsKey(tank)) {
+            shots.put(tank, new TankShot(screenWidth, screenHeight, shotAngle, barrelTip.x, barrelTip.y));
         }
     }
 
-    private void FireTankCannon() {
-        // shoot in angle currently pointing
-        Double shotAngle = tank.getBarrelAngle() - (Math.PI / 2);
-
-        // locate the tip of the barrel so the shot comes from the right part of tank
-        Point barrelTip = tank.getBarrelPosition();
-
-        // can only take one shot at a time
-        if (shot == null) {
-            shot = new TankShot(screenWidth, screenHeight, shotAngle, barrelTip.x, barrelTip.y);
-        }
-
-        // Need shot object array to hold active shots
-        // iterate through shot array to pass graphics object to draw on
-        // shot object keeps track of its own ordinance position
+    private void FireUserTankCannon() {
+        TankFireCannon(userTank);
     }
 
 
@@ -167,7 +164,7 @@ public class Main extends JFrame {
                 downPressed = true;
             }
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                FireTankCannon();
+                FireUserTankCannon();
             }
         }
 

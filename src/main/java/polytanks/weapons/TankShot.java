@@ -1,7 +1,6 @@
 package polytanks.weapons;
 
 import polytanks.environment.Wall;
-import polytanks.tanks.Tank;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
