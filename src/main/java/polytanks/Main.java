@@ -135,10 +135,7 @@ public class Main extends JFrame {
 
             // Delete destroyed tanks
             for(Map.Entry<String, Tank> entry : tanksToDelete.entrySet()) {
-                System.out.println("Removing CPU tank");
                 CpuTanks.remove(entry.getKey(), entry.getValue());
-                System.out.println(CpuTanks.isEmpty());
-                System.out.println(CpuTanks.size());
             }
 
             // Check for board cleared
