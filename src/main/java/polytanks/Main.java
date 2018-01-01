@@ -21,8 +21,7 @@ import javax.swing.JFrame;
 public class Main extends JFrame {
     boolean leftPressed, rightPressed, upPressed, downPressed, firePressed, startGamePressed;
     private UserTank userTank;
-
-    private boolean gameRunning;
+    
     private int screenWidth = 800;
     private int screenHeight = 600;
     private int score = 0;
@@ -59,7 +58,6 @@ public class Main extends JFrame {
         addKeyListener(new KeyInputHandler());
 
         // Start the game loop where all the actual game play comes from
-        gameRunning = true;
         gameLoop();
     }
 
