@@ -22,6 +22,7 @@ public class UserTank extends Tank{
 
     // Physics and position
     double posX, posY, angle, velX, velY, accelerationRate, decay, accelDecay, turningRate;
+    double startingX, startingY;
 
     // Polygon specs for each part of the tank respective of central origin point
     double[] xOrigPtsBody = {-10, 10, 10, -10};
@@ -33,8 +34,6 @@ public class UserTank extends Tank{
     int[] xOrigPtsBodyInt = {0,0,0,0}, yOrigPtsBodyInt = {0,0,0,0};
     int[] xOrigPtsTurretInt = {0,0,0,0}, yOrigPtsTurretInt = {0,0,0,0};
     int[] xOrigPtsBarrelInt = {0,0,0,0}, yOrigPtsBarrelInt = {0,0,0,0};
-    Polygon collisionPoly = new Polygon();
-
 
     public UserTank(int xSize, int ySize, int origPosX, int origPosY, Wall wall) {
         this.wall = wall;
@@ -42,8 +41,8 @@ public class UserTank extends Tank{
         screenWidth = xSize; // set screen limits
         screenHeight = ySize; // set screen limits
 
-        posX = origPosX;  // Set initial position
-        posY = origPosY;  // Set initial position
+        posX = startingX = origPosX;  // Set initial position
+        posY = startingY = origPosY;  // Set initial position
 
         velX = 0; // Not moving
         velY = 0; // Not moving
@@ -52,6 +51,11 @@ public class UserTank extends Tank{
         accelDecay = 0.1; // slowing rate for acceleration (movement under power)
         angle = Math.PI/2; // Point it right (90 Degrees)
         turningRate = 0.05; // Turns in radians (0 - 2PI)
+    }
+
+    public void reset() {
+        posX = startingX;
+        posY = startingY;
     }
 
     public void move() {
@@ -167,14 +171,6 @@ public class UserTank extends Tank{
         return p;
     }
 
-    public boolean checkCollision(Point2D p) {
-        return (collisionPoly.contains(p)) ? true : false;
-    }
-
-    public boolean checkCollision(double x, double y, double w, double h) {
-        return (collisionPoly.intersects(x, y, w, h)) ? true : false;
-    }
-
     public void paint(Graphics2D g) {
         for (int i=0; i < xOrigPtsBody.length; i++) {
             xOrigPtsBodyInt[i] = (int)(xOrigPtsBody[i]*Math.cos(angle) - yOrigPtsBody[i]*Math.sin(angle)+posX+.5);
@@ -209,6 +205,7 @@ public class UserTank extends Tank{
         g.setColor(Color.gray);
         g.fillPolygon(xOrigPtsBodyInt, yOrigPtsBodyInt, xOrigPtsBodyInt.length);
 
+        collisionPoly.reset();
         for (int i=0; i<xOrigPtsBodyInt.length; i++) {
             collisionPoly.addPoint(xOrigPtsBodyInt[i], yOrigPtsBodyInt[i]);
         }

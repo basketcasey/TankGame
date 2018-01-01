@@ -6,6 +6,7 @@ import polytanks.environment.Wall;
 import java.awt.*;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.util.Random;
 
 import polytanks.utils.GameMathUtils;
 
@@ -27,6 +28,7 @@ public class CpuTank extends Tank{
 
     // Physics and position
     double posX, posY, angle, velX, velY, accelerationRate, decay, accelDecay, turningRate;
+    double startingX, startingY;
 
     // Polygon specs for each part of the tank respective of central origin point
     double[] xOrigPtsBody = {-10, 10, 10, -10};
@@ -48,8 +50,8 @@ public class CpuTank extends Tank{
         screenWidth = xSize; // set screen limits
         screenHeight = ySize; // set screen limits
 
-        posX = origPosX;  // Set initial position
-        posY = origPosY;  // Set initial position
+        posX = startingX = origPosX;  // Set initial position
+        posY = startingY = origPosY;  // Set initial position
 
         velX = 0; // Not moving
         velY = 0; // Not moving
@@ -58,6 +60,11 @@ public class CpuTank extends Tank{
         accelDecay = 0.1; // slowing rate for acceleration (movement under power)
         angle = 0;
         turningRate = 0.05; // Turns in radians (0 - 2PI)
+    }
+
+    public void reset() {
+        posX = startingX;
+        posY = startingY;
     }
 
     public void move() {
@@ -167,7 +174,12 @@ public class CpuTank extends Tank{
         if (!isWallBlockingView()) {
             if (Math.toDegrees(this.angle) >= Math.toDegrees(angleToEnemy)-3 &&
                     Math.toDegrees(this.angle) <= Math.toDegrees(angleToEnemy) +3 ){
-                game.TankFireCannon(this);
+                // Only fire so often
+                Random rand = new Random();
+                int value = rand.nextInt(20);
+                if (value == 5) {
+                    game.TankFireCannon(this);
+                }
             } else {
                 // Rotate tank to target
                 if (GameMathUtils.isAngleToLeft(angle, angleToEnemy)) {
@@ -261,6 +273,12 @@ public class CpuTank extends Tank{
 
         g.setColor(Color.gray);
         g.fillPolygon(xOrigPtsBodyInt, yOrigPtsBodyInt, xOrigPtsBodyInt.length);
+
+        collisionPoly.reset();
+        for (int i=0; i<xOrigPtsBodyInt.length; i++) {
+            collisionPoly.addPoint(xOrigPtsBodyInt[i], yOrigPtsBodyInt[i]);
+        }
+
         g.setColor(Color.blue);
         g.fillPolygon(xOrigPtsTurretInt, yOrigPtsTurretInt, xOrigPtsTurretInt.length);
         g.setColor(Color.black);
