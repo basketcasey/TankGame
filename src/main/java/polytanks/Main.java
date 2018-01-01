@@ -25,8 +25,8 @@ public class Main extends JFrame {
     private boolean gameRunning;
     private int screenWidth = 800;
     private int screenHeight = 600;
-    private int health = 100;
     private int score = 0;
+    private int level = 0;
     private Wall wall;
 
     private HashMap<Tank, TankShot> shots = new HashMap<>();
@@ -35,14 +35,14 @@ public class Main extends JFrame {
     // To get around static class issues for main game, an instance is created
     // and control is immediately handed here
     public Main() {
+        score = 0;
         initGame();
     }
 
     private void initGame() {
+        level++;
         removeGameArtifacts();
         leftPressed = rightPressed = upPressed = downPressed = false;
-        health = 100;
-        score = 0;
 
         wall = new Wall(screenWidth, screenHeight);
 
@@ -88,10 +88,10 @@ public class Main extends JFrame {
         g2.setColor(Color.BLUE);
         g2.setFont(new Font("Purisa", Font.PLAIN, 18));
         g2.drawString("UserTank Battle", 20, 40);
-        g2.drawString("Health: " + health + "%   Score: " + score, screenWidth/2 - 100, 40 );
+        g2.drawString("Level: " + level + "  Health: " + userTank.getHealth() +
+                "%  Score: " + score, screenWidth/2 - 150, 40 );
 
-        if (health <= 0) {
-            health = 0;
+        if (userTank.isDestroyed()) {
             g2.drawString("Game Over - Press N to start game", screenWidth/2  - 100, screenHeight/2 - 40);
         }
 
@@ -100,7 +100,9 @@ public class Main extends JFrame {
 
         for(Map.Entry<String, Tank> entry : CpuTanks.entrySet()) {
            Tank tank = entry.getValue();
-           tank.paint(g2);
+           if (!tank.isDestroyed()) {
+               tank.paint(g2);
+           }
         }
 
         // Add the obstructions
@@ -116,13 +118,33 @@ public class Main extends JFrame {
     }
 
     private void gameLoop() {
-        while (health > 0) {
+        while (userTank.getHealth() > 0) {
             processUserControls();
             // Move tanks
             userTank.move();
+
+            HashMap<String, Tank> tanksToDelete = new HashMap<>();
             for(Map.Entry<String, Tank> entry : CpuTanks.entrySet()) {
                 Tank tank = entry.getValue();
-                tank.move();
+                if (tank.isDestroyed()) {
+                    tanksToDelete.put(entry.getKey(), tank);
+                } else {
+                    tank.move();
+                }
+            }
+
+            // Delete destroyed tanks
+            for(Map.Entry<String, Tank> entry : tanksToDelete.entrySet()) {
+                System.out.println("Removing CPU tank");
+                CpuTanks.remove(entry.getKey(), entry.getValue());
+                System.out.println(CpuTanks.isEmpty());
+                System.out.println(CpuTanks.size());
+            }
+
+            // Check for board cleared
+            if (CpuTanks.isEmpty()) {
+                //restart
+                initGame();
             }
 
             // Check for collisions
@@ -142,7 +164,7 @@ public class Main extends JFrame {
                 // Did shot hit a tank?
                 if (tank instanceof CpuTank) {
                     if (userTank.checkCollision(shotLoc)) {
-                        health -= 25;
+                        userTank.processHit();
                         tankShotsToDelete.add(tank);
                     }
                 }
@@ -153,6 +175,7 @@ public class Main extends JFrame {
                         // check collision
                         if (testTank.checkCollision(shotLoc)) {
                             score += 100;
+                            testTank.processHit();
                             tankShotsToDelete.add(tank); // References the shooting tank not target tank
                         }
                     }
@@ -162,6 +185,9 @@ public class Main extends JFrame {
             for (int i=0; i < tankShotsToDelete.size(); i++) {
                 shots.remove(tankShotsToDelete.get(i));
             }
+
+            // Check if cpu tanks are both destroyed
+
 
             repaint();
 
@@ -174,9 +200,21 @@ public class Main extends JFrame {
 
         }
 
-        while (health <= 0) {
+        // Handle ended game
+        while (userTank.getHealth() <= 0) {
             // wait for new game request
-            processUserControls();
+            if (startGamePressed == true) {
+                startGamePressed = false;
+                score = 0;
+                level = 0;
+                initGame();
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 
@@ -193,10 +231,6 @@ public class Main extends JFrame {
         }
         if (downPressed) {
             userTank.setAccelBackward();
-        }
-        if (startGamePressed) {
-            startGamePressed = false;
-            initGame();
         }
     }
 
@@ -235,7 +269,9 @@ public class Main extends JFrame {
                 FireUserTankCannon();
             }
             if (e.getKeyCode() == KeyEvent.VK_N) {
-                startGamePressed = true;
+                if (userTank.getHealth() <= 0) {
+                    startGamePressed = true;
+                }
             }
         }
 

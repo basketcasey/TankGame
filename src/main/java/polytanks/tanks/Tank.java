@@ -16,6 +16,8 @@ public abstract class Tank {
     public abstract Point getBarrelPosition();
     public abstract void paint(Graphics2D g);
     public abstract void move();
+    public abstract void processHit();
+    public abstract boolean isDestroyed();
     public abstract void reset();
     public boolean checkCollision(Point2D p) {
         return (collisionPoly.contains(p)) ? true : false;

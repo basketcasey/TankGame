@@ -15,6 +15,8 @@ public class UserTank extends Tank{
     boolean turningRight = false;
     boolean accelForward = false;
     boolean accelBackward = false;
+    boolean destroyed;
+    int health;
 
     Wall wall;
     // Screen dimension for limiting position
@@ -41,21 +43,40 @@ public class UserTank extends Tank{
         screenWidth = xSize; // set screen limits
         screenHeight = ySize; // set screen limits
 
+        health = 100;
+        destroyed = false;
+
         posX = startingX = origPosX;  // Set initial position
         posY = startingY = origPosY;  // Set initial position
 
         velX = 0; // Not moving
         velY = 0; // Not moving
-        accelerationRate = .10; // Used to calc velocity
+        accelerationRate = 1.5; // Used to calc velocity
         decay = 0.1; // slowing rate for current velocity (inertia)
-        accelDecay = 0.1; // slowing rate for acceleration (movement under power)
+        accelDecay = 0.06; // slowing rate for acceleration (movement under power)
         angle = Math.PI/2; // Point it right (90 Degrees)
-        turningRate = 0.05; // Turns in radians (0 - 2PI)
+        turningRate = 0.155555555555555555; // Turns in radians (0 - 2PI)
     }
 
+    public void processHit() {
+        health -= 5;
+        if (health <= 0) {
+            destroyed = true;
+        }
+    }
+
+    public int getHealth() {
+        return health;
+    }
+
+    public boolean isDestroyed() {
+        return destroyed;
+    }
     public void reset() {
         posX = startingX;
         posY = startingY;
+        health = 100;
+        destroyed = false;
     }
 
     public void move() {

@@ -19,8 +19,10 @@ public class CpuTank extends Tank{
     boolean turningRight = false;
     boolean accelForward = false;
     boolean accelBackward = false;
+    boolean destroyed = false;
     UserTank enemyTank;
     Main game = null;
+    int health;
 
     Wall wall;
     // Screen dimension for limiting position
@@ -46,7 +48,7 @@ public class CpuTank extends Tank{
         this.game = main;
         this.wall = wall;
         enemyTank = userTank;
-
+        health = 100;
         screenWidth = xSize; // set screen limits
         screenHeight = ySize; // set screen limits
 
@@ -62,12 +64,26 @@ public class CpuTank extends Tank{
         turningRate = 0.05; // Turns in radians (0 - 2PI)
     }
 
+    public void processHit() {
+        health -= 25;
+        if (health <= 0) {
+            destroyed = true;
+        }
+    }
+
+    public boolean isDestroyed() {
+        return destroyed;
+    }
+
     public void reset() {
         posX = startingX;
         posY = startingY;
     }
 
     public void move() {
+        if (isDestroyed()) {
+            return;
+        }
         pursue();
         Double origX = posX;
         Double origY = posY;
