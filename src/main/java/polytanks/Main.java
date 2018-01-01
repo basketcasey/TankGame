@@ -21,7 +21,7 @@ import javax.swing.JFrame;
 public class Main extends JFrame {
     boolean leftPressed, rightPressed, upPressed, downPressed, firePressed, startGamePressed;
     private UserTank userTank;
-    
+
     private int screenWidth = 800;
     private int screenHeight = 600;
     private int score = 0;
@@ -145,7 +145,6 @@ public class Main extends JFrame {
             // Check for collisions
             // Shots
             ArrayList<Tank> tankShotsToDelete = new ArrayList<>();
-            int count=0;
             for(Map.Entry<Tank, TankShot> entry : shots.entrySet()) {
                 Tank tank = entry.getKey();
                 TankShot shot = entry.getValue();
@@ -180,9 +179,6 @@ public class Main extends JFrame {
             for (int i=0; i < tankShotsToDelete.size(); i++) {
                 shots.remove(tankShotsToDelete.get(i));
             }
-
-            // Check if cpu tanks are both destroyed
-
 
             repaint();
 
