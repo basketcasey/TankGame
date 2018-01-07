@@ -87,7 +87,7 @@ public class GameMathUtils {
         return a.getX() - b.getX();
     }
 
-    public static Double GetHypotenusForTwoPoints(Point2D a, Point2D b) {
+    public static Double getHypotenusForTwoPoints(Point2D a, Point2D b) {
         return Math.sqrt(Math.pow(getYbetweenTwoPoints(a, b), 2) +
           Math.pow(getXbetweenTwoPoints(a, b), 2));
     }

@@ -12,7 +12,6 @@ import static polytanks.utils.GameMathUtils.CheckAngleBoundary;
 
 public class CpuTank extends Tank {
     UserTank enemyTank;
-    Main game = null;
 
     public CpuTank(Main main, int xSize, int ySize, int origPosX, int origPosY, Wall wall, UserTank userTank) {
         this.game = main;
@@ -31,7 +30,7 @@ public class CpuTank extends Tank {
         decay = 0.1; // slowing rate for current velocity (inertia)
         accelDecay = 0.1; // slowing rate for acceleration (movement under power)
         angle = 0;
-        turningRate = 0.05; // Turns in radians (0 - 2PI)
+        turningRate = 0.025; // Turns in radians (0 - 2PI)
     }
 
     public void move() {
@@ -41,6 +40,8 @@ public class CpuTank extends Tank {
         pursue();
         Double origX = posX;
         Double origY = posY;
+        if (accelerationRate > 1.5) { accelerationRate = 1.5; }
+        if (accelerationRate < -1.5) { accelerationRate = -1.5; }
 
         if (turningLeft) {
             angle -= turningRate;
@@ -69,14 +70,14 @@ public class CpuTank extends Tank {
         if (accelForward) {
             // move in direction where pointing
             // Problem here is that the current angle doesn't match with front of tank
-            accelerationRate += 0.75;
+            accelerationRate += 0.25;
             velX = Math.cos(angle - (Math.PI / 2)) * accelerationRate;  // subtracting PI / 2 corrects direction
             velY = Math.sin(angle - (Math.PI / 2)) * accelerationRate;  // subtracting PI / 2 corrects direction
             accelForward = false;
         }
         if (accelBackward) {
             // move in negative direction for where pointing
-            accelerationRate -= 0.75;
+            accelerationRate -= 0.25;
             // move in opposite direction where pointing
             velX = Math.cos(angle - (Math.PI / 2)) * accelerationRate;  // subtracting PI / 2 corrects direction
             velY = Math.sin(angle - (Math.PI / 2)) * accelerationRate;  // subtracting PI / 2 corrects direction
@@ -87,10 +88,7 @@ public class CpuTank extends Tank {
         posX += velX;
         posY += velY;
 
-        // Can't drive through walls
-        Point2D p = new Point2D.Double();
-        p.setLocation(posX, posY);
-        if (wall.checkCollision(p)) {
+        if(game.checkCollisions(this)) {
             velX = velY = 0;
             posX = origX;
             posY = origY;
@@ -166,7 +164,7 @@ public class CpuTank extends Tank {
                     Math.toDegrees(this.angle) <= Math.toDegrees(angleToEnemy) + 3) {
                 // Only fire so often
                 Random rand = new Random();
-                int value = rand.nextInt(20);
+                int value = rand.nextInt(30);
                 if (value == 5) {
                     game.TankFireCannon(this);
                 }
@@ -218,25 +216,6 @@ public class CpuTank extends Tank {
             xOrigPtsBodyInt[i] = (int) (xOrigPtsBody[i] * Math.cos(angle) - yOrigPtsBody[i] * Math.sin(angle) + posX + .5);
             yOrigPtsBodyInt[i] = (int) (xOrigPtsBody[i] * Math.sin(angle) + yOrigPtsBody[i] * Math.cos(angle) + posY + .5);
 
-            boolean debug_rotation = false;
-            if (debug_rotation) {
-                System.out.println("OffsetX: " + xOrigPtsBody[i]
-                        + "\tOffset Y: " + yOrigPtsBody[i]);
-                System.out.println("xOrigin: " + posX + "\tyOrigin: "
-                        + posY + "\tAngle (Rad): " + angle);
-                System.out.println("newX: " + xOrigPtsBodyInt[i] + "\tnewY: "
-                        + yOrigPtsBodyInt[i]);
-                System.out.println("cos(angle): " + Math.cos(angle)
-                        + "\tsin(angle): " + Math.sin(angle));
-                System.out.println((xOrigPtsBody[i] * Math.cos(angle)) + " - "
-                        + (yOrigPtsBody[i] * Math.sin(angle)) + " + "
-                        + (posX + 0.5));
-                System.out.println((xOrigPtsBody[i] * Math.sin(angle)) + " + "
-                        + (yOrigPtsBody[i] * Math.cos(angle)) + " + "
-                        + (posY + 0.5));
-                System.out.println("");
-            }
-
             xOrigPtsTurretInt[i] = (int) (xOrigPtsTurret[i] * Math.cos(angle) - yOrigPtsTurret[i] * Math.sin(angle) + posX + .5);
             yOrigPtsTurretInt[i] = (int) (xOrigPtsTurret[i] * Math.sin(angle) + yOrigPtsTurret[i] * Math.cos(angle) + posY + .5);
 
@@ -247,10 +226,8 @@ public class CpuTank extends Tank {
         g.setColor(Color.gray);
         g.fillPolygon(xOrigPtsBodyInt, yOrigPtsBodyInt, xOrigPtsBodyInt.length);
 
-        collisionPoly.reset();
-        for (int i = 0; i < xOrigPtsBodyInt.length; i++) {
-            collisionPoly.addPoint(xOrigPtsBodyInt[i], yOrigPtsBodyInt[i]);
-        }
+        double radius = 40;
+        collisionRectangle.setBounds((int)(posX - radius/2), (int)(posY - radius/2), (int)radius, (int)radius);
 
         g.setColor(Color.blue);
         g.fillPolygon(xOrigPtsTurretInt, yOrigPtsTurretInt, xOrigPtsTurretInt.length);

@@ -1,17 +1,19 @@
 package polytanks.tanks;
 
+import polytanks.Main;
 import polytanks.environment.Wall;
 
 import java.awt.*;
 import java.awt.geom.Point2D;
 
 public abstract class Tank {
+    Main game = null;
     boolean turningLeft = false;
     boolean turningRight = false;
     boolean accelForward = false;
     boolean accelBackward = false;
 
-    int hitPoints = 25; // damage done by shots
+    int hitPoints = 50; // damage done by shots
 
     // Physics and position
     double posX, posY, angle, velX, velY, accelerationRate, decay, accelDecay, turningRate;
@@ -33,22 +35,32 @@ public abstract class Tank {
 
     boolean destroyed;
     int health;
-    Polygon collisionPoly = new Polygon();
+    Rectangle collisionRectangle = new Rectangle();
 
     public abstract void paint(Graphics2D g);
     public abstract void move();
+
+    public void setAngle(Double angle) {
+        this.angle = angle;
+    }
+
+    public Rectangle getCollisionRectangle() {
+        return collisionRectangle;
+    }
+
+
+    public void setCollisionRectangle(Rectangle rect) {
+        collisionRectangle = rect;
+    }
+
     public boolean checkCollision(Point2D p) {
-        return (collisionPoly.contains(p)) ? true : false;
+        return  (getCollisionRectangle().contains(p)) ? true : false;
     }
 
     public Point2D getTankLocation() {
         Point2D p = new Point2D.Double();
         p.setLocation(posX, posY);
         return p;
-    }
-
-    public boolean checkCollision(double x, double y, double w, double h) {
-        return (collisionPoly.intersects(x, y, w, h)) ? true : false;
     }
 
     public int getHealth() {

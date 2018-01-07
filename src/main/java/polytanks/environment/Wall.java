@@ -16,36 +16,43 @@ public class Wall {
     public Wall(int screenWidth, int screenHeight) {
         this.screenWidth = screenWidth;
         this.screenHeight = screenHeight;
+        Rectangle2D rect1 = new Rectangle2D.Float();
+        Rectangle2D rect2 = new Rectangle2D.Float();
+        Rectangle2D rect3 = new Rectangle2D.Float();
+        Rectangle2D rect4 = new Rectangle2D.Float();
+        Rectangle2D rect5 = new Rectangle2D.Float();
+        Rectangle2D rect6 = new Rectangle2D.Float();
+        Rectangle2D rect7 = new Rectangle2D.Float();
+        Rectangle2D rect8 = new Rectangle2D.Float();
+        Rectangle2D rect9 = new Rectangle2D.Float();
 
-        Rectangle2D rect, rect2, rect3;
-        Rectangle2D collisionRect, collisionRect2, collisionRect3; // Little buffer added
-
-        rect = new Rectangle2D.Float();
-        rect.setFrame(200, 400, 10, 50);
-        collisionRect = new Rectangle2D.Float();
-        collisionRect.setFrame(185, 385, 40, 80);
-        walls.add(rect);
-        collisionWalls.add(collisionRect);
-
-        rect2 = new Rectangle2D.Float();
-        rect2.setFrame(500, 100, 10, 100);
-        collisionRect2 = new Rectangle2D.Float();
-        collisionRect2.setFrame(485, 85, 40, 130);
+        rect1.setFrame(400, 45, 20, 155);
+        walls.add(rect1);
+        rect2.setFrame(400, 400, 20, 200);
         walls.add(rect2);
-        collisionWalls.add(collisionRect2);
 
-        rect3 = new Rectangle2D.Float();
-        rect3.setFrame(50, 150, 200, 10);
-        collisionRect3 = new Rectangle2D.Float();
-        collisionRect3.setFrame(35, 135, 230, 40);
+        rect3.setFrame(100, 150, 200, 20);
         walls.add(rect3);
-        collisionWalls.add(collisionRect3);
+        rect4.setFrame(100, 450, 200, 20);
+        walls.add(rect4);
+        rect5.setFrame(1, 300, 100, 20);
+        walls.add(rect5);
+
+        rect6.setFrame(520, 150, 200, 20);
+        walls.add(rect6);
+        rect7.setFrame(520, 450, 200, 20);
+        walls.add(rect7);
+        rect8.setFrame(700, 300, 100, 20);
+        walls.add(rect8);
+
+        rect9.setFrame(300, 300, 220, 20);
+        walls.add(rect9);
     }
 
     public boolean checkCollision(Point2D p) {
         boolean collision = false;
-        for (int i=0; i < collisionWalls.size(); i++) {
-            if (collisionWalls.get(i).contains(p)) {
+        for (int i=0; i < walls.size(); i++) {
+            if (walls.get(i).contains(p)) {
                 collision = true;
             }
         }
@@ -54,8 +61,18 @@ public class Wall {
 
     public boolean checkCollision(Line2D line2D) {
         boolean collision = false;
-        for (int i=0; i < collisionWalls.size(); i++) {
-            if (collisionWalls.get(i).intersectsLine(line2D)) {
+        for (int i=0; i < walls.size(); i++) {
+            if (walls.get(i).intersectsLine(line2D)) {
+                collision = true;
+            }
+        }
+        return collision;
+    }
+
+    public boolean checkCollision(Rectangle rect) {
+        boolean collision = false;
+        for (int i=0; i < walls.size(); i++) {
+            if (walls.get(i).intersects(rect)) {
                 collision = true;
             }
         }
@@ -64,7 +81,7 @@ public class Wall {
 
     public void paint(Graphics2D g) {
         for (int i=0; i < walls.size(); i++) {
-            g.setPaint(Color.BLACK);
+            g.setPaint(new Color(6, 40, 18));
             g.draw(walls.get(i));
             g.fill(walls.get(i));
         }

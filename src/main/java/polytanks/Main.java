@@ -1,5 +1,6 @@
 package polytanks;
 
+import org.w3c.dom.css.Rect;
 import polytanks.environment.Wall;
 import polytanks.tanks.CpuTank;
 import polytanks.tanks.Tank;
@@ -13,6 +14,7 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 import javax.swing.JFrame;
 
@@ -40,14 +42,34 @@ public class Main extends JFrame {
 
     private void initGame() {
         level++;
-        removeGameArtifacts();
+        Random rand = new Random();
         leftPressed = rightPressed = upPressed = downPressed = false;
-
+        removeGameArtifacts();
         wall = new Wall(screenWidth, screenHeight);
+        userTank = new UserTank(this, screenWidth, screenHeight, 50, 60);
 
-        userTank = new UserTank(screenWidth, screenHeight, 100, 100, wall);
-        CpuTanks.put("CpuTank1", new CpuTank(this, screenWidth, screenHeight, screenWidth/2, screenHeight/2, wall, userTank));
-        CpuTanks.put("CpuTank2", new CpuTank(this, screenWidth, screenHeight, screenWidth - 40, screenHeight - 40, wall, userTank));
+        // Add CPU tanks
+        for (int i=1; i <= level; i++) {
+            int angle = rand.nextInt(360);
+
+            int valueX = rand.nextInt(screenWidth);
+            int valueY = rand.nextInt(screenHeight);
+
+            double radius = 40;
+            Rectangle rect = new Rectangle((int)(valueX-radius/2), (int)(valueY-radius/2), (int)radius, (int)radius);
+            Tank ghost = new CpuTank(this, screenWidth, screenHeight, valueX, valueY, wall, userTank);
+            ghost.setCollisionRectangle(rect);
+            ghost.setAngle(Math.toRadians(angle));
+
+            while (checkCollisions(ghost)) { // find a place for this thing
+                valueX = rand.nextInt(screenWidth);
+                valueY = rand.nextInt(screenHeight);
+                rect = new Rectangle((int)(valueX-radius/2), (int)(valueY-radius/2), (int)radius, (int)radius);
+                ghost = new CpuTank(this, screenWidth, screenHeight, valueX, valueY, wall, userTank);
+                ghost.setCollisionRectangle(rect);
+            }
+            CpuTanks.put("CpuTank" + i, ghost);
+        }
 
         // Define the frame variables
         setSize(screenWidth, screenHeight);
@@ -72,7 +94,7 @@ public class Main extends JFrame {
         Graphics2D g2 = (Graphics2D)g;
 
         // Reset frame to a fresh background
-        g2.setColor(Color.white);
+        g2.setColor(new Color(186, 219, 197));
         g2.fillRect(0, 0, 800, 600);
 
         // Add scoring
@@ -83,14 +105,14 @@ public class Main extends JFrame {
 //        rh.put(RenderingHints.KEY_RENDERING,
 //                RenderingHints.VALUE_RENDER_QUALITY);
 //        g2.setRenderingHints(rh);
-        g2.setColor(Color.BLUE);
+        g2.setColor(Color.BLACK);
         g2.setFont(new Font("Purisa", Font.PLAIN, 18));
-        g2.drawString("UserTank Battle", 20, 40);
+        g2.drawString("Tank Battle", 20, 40);
         g2.drawString("Level: " + level + "  Health: " + userTank.getHealth() +
-                "%  Score: " + score, screenWidth/2 - 150, 40 );
+                "%  Score: " + score, screenWidth/2 - 140, 40 );
 
         if (userTank.isDestroyed()) {
-            g2.drawString("Game Over - Press N to start game", screenWidth/2  - 100, screenHeight/2 - 40);
+            g2.drawString("Game Over - Press N to start game", screenWidth/2  - 140, screenHeight/2 - 60);
         }
 
         // Add the tanks
@@ -115,11 +137,34 @@ public class Main extends JFrame {
 
     }
 
+    // Ensure tank doesn't drive through another tank or a wall
+    public boolean checkCollisions(Tank tank) {
+        if (wall.checkCollision(tank.getCollisionRectangle())) {
+            return true;
+        }
+        // Can't drive through tanks
+        if (!tank.equals(userTank)){ // Skip if this is the same tank
+            // Check for collision with user
+            if (userTank.getCollisionRectangle().intersects(tank.getCollisionRectangle())) {
+                return true;
+            }
+        }
+
+        for(Map.Entry<String, Tank> entry : CpuTanks.entrySet()) {
+            Tank testTank = entry.getValue();
+            if (!tank.equals(testTank)) { // Skip if this is the same tank
+                if(testTank.getCollisionRectangle().intersects(tank.getCollisionRectangle())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private void gameLoop() {
         while (userTank.getHealth() > 0) {
             processUserControls();
-            // Move tanks
-            userTank.move();
+            userTank.move(); // Move user tank per user input
 
             HashMap<String, Tank> tanksToDelete = new HashMap<>();
             for(Map.Entry<String, Tank> entry : CpuTanks.entrySet()) {
@@ -127,7 +172,7 @@ public class Main extends JFrame {
                 if (tank.isDestroyed()) {
                     tanksToDelete.put(entry.getKey(), tank);
                 } else {
-                    tank.move();
+                    tank.move(); // CPU tanks move based on pursue method
                 }
             }
 
@@ -138,12 +183,10 @@ public class Main extends JFrame {
 
             // Check for board cleared
             if (CpuTanks.isEmpty()) {
-                //restart
-                initGame();
+                initGame(); // start next level
             }
 
-            // Check for collisions
-            // Shots
+            // Check shots for collisions
             ArrayList<Tank> tankShotsToDelete = new ArrayList<>();
             for(Map.Entry<Tank, TankShot> entry : shots.entrySet()) {
                 Tank tank = entry.getKey();
@@ -236,7 +279,6 @@ public class Main extends JFrame {
     private void FireUserTankCannon() {
         TankFireCannon(userTank);
     }
-
 
     public static void main(String[] args) {
         Main main = new Main();

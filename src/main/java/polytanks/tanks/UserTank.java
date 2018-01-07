@@ -1,15 +1,16 @@
 package polytanks.tanks;
 
-import polytanks.environment.Wall;
+import javafx.scene.shape.Circle;
+import polytanks.Main;
 
 import java.awt.*;
-import java.awt.geom.Point2D;
 
 import static polytanks.utils.GameMathUtils.CheckAngleBoundary;
+import static polytanks.utils.GameMathUtils.getHypotenusForTwoPoints;
 
 public class UserTank extends Tank{
-    public UserTank(int xSize, int ySize, int origPosX, int origPosY, Wall wall) {
-        this.wall = wall;
+    public UserTank(Main game, int xSize, int ySize, int origPosX, int origPosY) {
+        this.game = game;
         hitPoints = 10;  // adjust damage var
 
         screenWidth = xSize; // set screen limits
@@ -33,6 +34,9 @@ public class UserTank extends Tank{
     public void move() {
         Double origX = posX;
         Double origY = posY;
+
+        if (accelerationRate > 5) { accelerationRate = 4; }
+        if (accelerationRate < -5) { accelerationRate = -4; }
 
         if (turningLeft) {
             angle -= turningRate; // decrease angle by rate so turn speed can be easily modified
@@ -81,14 +85,24 @@ public class UserTank extends Tank{
         posX += velX;
         posY += velY;
 
-        // Can't drive through walls
-        Point2D p = new Point2D.Double();
-        p.setLocation(posX, posY);
-        if (wall.checkCollision(p)) {
+        if(game.checkCollisions(this)) {
+            System.out.println("Collision: " + accelerationRate);
+
+            if (posY > origY) {
+                posY = origY - 2;
+            } else {
+                posY = origY + 2;
+            }
+
+            if (posX > origX) {
+                posX = origX - 2;
+            } else {
+                posX = origX + 2;
+            }
+            accelerationRate = 0;
             velX = velY = 0;
-            posX = origX;
-            posY = origY;
         }
+
 
         // Limit tanks position to screen
         if (posX > screenWidth-20) { posX = screenWidth-20; velX = 0;}
@@ -135,25 +149,6 @@ public class UserTank extends Tank{
             xOrigPtsBodyInt[i] = (int)(xOrigPtsBody[i]*Math.cos(angle) - yOrigPtsBody[i]*Math.sin(angle)+posX+.5);
             yOrigPtsBodyInt[i] = (int)(xOrigPtsBody[i]*Math.sin(angle) + yOrigPtsBody[i]*Math.cos(angle)+posY+.5);
 
-            boolean debug_rotation = false;
-            if (debug_rotation) {
-                System.out.println("OffsetX: " + xOrigPtsBody[i]
-                        + "\tOffset Y: " + yOrigPtsBody[i]);
-                System.out.println("xOrigin: " + posX + "\tyOrigin: "
-                        + posY + "\tAngle (Rad): " + angle);
-                System.out.println("newX: " + xOrigPtsBodyInt[i] + "\tnewY: "
-                        + yOrigPtsBodyInt[i]);
-                System.out.println("cos(angle): " + Math.cos(angle)
-                        + "\tsin(angle): " + Math.sin(angle));
-                System.out.println((xOrigPtsBody[i] * Math.cos(angle)) + " - "
-                        + (yOrigPtsBody[i] * Math.sin(angle)) + " + "
-                        + (posX + 0.5));
-                System.out.println((xOrigPtsBody[i] * Math.sin(angle)) + " + "
-                        + (yOrigPtsBody[i] * Math.cos(angle)) + " + "
-                        + (posY + 0.5));
-                System.out.println("");
-            }
-
             xOrigPtsTurretInt[i] = (int)(xOrigPtsTurret[i]*Math.cos(angle) - yOrigPtsTurret[i]*Math.sin(angle)+posX+.5);
             yOrigPtsTurretInt[i] = (int)(xOrigPtsTurret[i]*Math.sin(angle) + yOrigPtsTurret[i]*Math.cos(angle)+posY+.5);
 
@@ -164,10 +159,8 @@ public class UserTank extends Tank{
         g.setColor(Color.gray);
         g.fillPolygon(xOrigPtsBodyInt, yOrigPtsBodyInt, xOrigPtsBodyInt.length);
 
-        collisionPoly.reset();
-        for (int i=0; i<xOrigPtsBodyInt.length; i++) {
-            collisionPoly.addPoint(xOrigPtsBodyInt[i], yOrigPtsBodyInt[i]);
-        }
+        double radius = 40;
+        collisionRectangle.setBounds((int)(posX - radius/2), (int)(posY - radius/2), (int)radius, (int)radius);
 
         g.setColor(Color.darkGray);
         g.fillPolygon(xOrigPtsTurretInt, yOrigPtsTurretInt, xOrigPtsTurretInt.length);
